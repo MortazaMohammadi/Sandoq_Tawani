@@ -162,6 +162,9 @@ class MainWindow(QMainWindow):
                     }
                 """)
             self.current_theme = 'dark'
+            # Update table styles for dark mode
+            if hasattr(self, 'groups_tab') and hasattr(self.groups_tab, 'apply_table_styles'):
+                self.groups_tab.apply_table_styles()
             try:
                 self.btn_theme.setText('☀️')
                 self.btn_theme.setChecked(True)
@@ -179,6 +182,9 @@ class MainWindow(QMainWindow):
                     }
                 """)
             self.current_theme = 'light'
+            # Update table styles for light mode
+            if hasattr(self, 'groups_tab') and hasattr(self.groups_tab, 'apply_table_styles'):
+                self.groups_tab.apply_table_styles()
             try:
                 self.btn_theme.setText('🌙')
                 self.btn_theme.setChecked(False)
