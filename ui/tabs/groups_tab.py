@@ -23,31 +23,37 @@ class GroupsTab(BaseTab):
         from utils.date_utils import to_persian_digits
 
         self.table = QTableWidget()
+        self.table.setLayoutDirection(Qt.RightToLeft)  # Ensure RTL layout for table
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["شناسه", "نام گروه", "رهبر", "تاریخ ایجاد", "عملیات"])
+        self.table.setHorizontalHeaderLabels(["🔢 شناسه", "🏷️ نام گروه", "👑 رهبر", "📅 تاریخ ایجاد", "⚡ عملیات"])
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.table.setAlternatingRowColors(True)
+        self.table.setAlternatingRowColors(False)  # Disable alternating row colors for uniform appearance
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
+        self.table.setLayoutDirection(Qt.RightToLeft)  # Ensure RTL for all content
         self.apply_table_styles()
         
         # Make table expandable to fill available space
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         
-        # Setup column widths
+        # Setup column widths with better proportions
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.Fixed)
         header.setSectionResizeMode(1, QHeaderView.Stretch)
         header.setSectionResizeMode(2, QHeaderView.Stretch)
         header.setSectionResizeMode(3, QHeaderView.Stretch)
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.Fixed)
+        
+        # Set fixed widths for ID and actions columns
+        header.resizeSection(0, 100)  # ID column
+        header.resizeSection(4, 120)  # Actions column (3 buttons * 32px + spacing)
         
         # Context menu
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.show_context_menu)
-        self.table.doubleClicked.connect(lambda idx: self.edit_group_by_id(int(self.table.item(idx.row(),0).text())))
+        self.table.doubleClicked.connect(lambda idx: self.edit_group_by_id(int(self.table.item(idx.row(),0).text().split()[-1])))
         
         self.layout.addWidget(self.table, 1)  # Add stretch factor to table
         self.layout.addStretch(0)  # Remove extra stretch at bottom
@@ -55,105 +61,150 @@ class GroupsTab(BaseTab):
         self.refresh()
     
     def apply_table_styles(self):
-        """Apply theme-aware styles to table"""
+        """Apply beautiful theme-aware styles to table"""
         is_dark_mode = self.main_window and hasattr(self.main_window, 'current_theme') and self.main_window.current_theme == 'dark'
         
         if is_dark_mode:
             stylesheet = """
                 QTableWidget {
-                    background-color: #1a202c;
-                    border: 1px solid #2d3748;
-                    border-radius: 8px;
-                    gridline-color: #2d3748;
+                    background-color: #1e293b;
+                    border: 2px solid #334155;
+                    gridline-color: #334155;
+                    selection-background-color: #3b82f6;
                 }
                 QTableWidget::item {
-                    padding: 0px;
-                    margin: 0px;
+                    padding: 12px 8px;
+                    margin: 2px;
                     border: none;
-                    color: #cbd5e0;
+                    color: #e2e8f0;
+                    background-color: #1e293b;
+                    text-align: right;
                 }
                 QTableWidget::item:selected {
-                    background-color: #2d3748;
-                    color: #e2e8f0;
+                    background-color: #3b82f6;
+                    color: #ffffff;
+                }
+                QTableWidget::item:hover {
+                    background-color: #334155;
                 }
                 QHeaderView::section {
-                    background-color: #0f1419;
-                    padding: 12px 8px;
+                    background-color: #0f172a;
+                    padding: 16px 12px;
                     border: none;
-                    font-weight: 600;
-                    color: #cbd5e0;
-                    border-bottom: 2px solid #2d3748;
+                    font-weight: 700;
+                    font-size: 14px;
+                    color: #f1f5f9;
+                    border-bottom: 3px solid #3b82f6;
+                    text-align: right;
+                }
+                QTableWidget QScrollBar:vertical {
+                    background-color: #1e293b;
+                    width: 12px;
+                }
+                QTableWidget QScrollBar::handle:vertical {
+                    background-color: #475569;
+                    min-height: 30px;
+                }
+                QTableWidget QScrollBar::handle:vertical:hover {
+                    background-color: #64748b;
                 }
             """
         else:
             stylesheet = """
                 QTableWidget {
                     background-color: #ffffff;
-                    border: 1px solid #e0e0e0;
-                    border-radius: 8px;
+                    border: 2px solid #e2e8f0;
+                    border-radius: 12px;
+                    gridline-color: #e2e8f0;
+                    selection-background-color: #dbeafe;
                 }
                 QTableWidget::item {
-                    padding: 0px;
-                    margin: 0px;
+                    padding: 12px 8px;
+                    margin: 2px;
                     border: none;
-                    color: #2c3e50;
+                    border-radius: 6px;
+                    color: #1e293b;
+                    background-color: #ffffff;
+                    text-align: right;
                 }
                 QTableWidget::item:selected {
-                    background-color: #e8f0ff;
-                    color: #000000;
+                    background-color: #dbeafe;
+                    color: #1e293b;
+                    border-radius: 6px;
+                    border: 1px solid #3b82f6;
+                }
+                QTableWidget::item:hover {
+                    background-color: #f8fafc;
+                    border-radius: 6px;
                 }
                 QHeaderView::section {
-                    background-color: #f8f9fb;
-                    padding: 12px 8px;
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #f8fafc, stop:1 #e2e8f0);
+                    padding: 16px 12px;
                     border: none;
-                    font-weight: 600;
-                    color: #2c3e50;
-                    border-bottom: 2px solid #e0e0e0;
+                    font-weight: 700;
+                    font-size: 14px;
+                    color: #1e293b;
+                    border-bottom: 3px solid #3b82f6;
+                    border-radius: 8px 8px 0 0;
+                    text-align: right;
+                }
+                QTableWidget QScrollBar:vertical {
+                    background-color: #f8fafc;
+                    width: 12px;
+                    border-radius: 6px;
+                }
+                QTableWidget QScrollBar::handle:vertical {
+                    background-color: #cbd5e1;
+                    border-radius: 6px;
+                    min-height: 30px;
+                }
+                QTableWidget QScrollBar::handle:vertical:hover {
+                    background-color: #94a3b8;
                 }
             """
         
         self.table.setStyleSheet(stylesheet)
     
     def get_button_style(self, button_type='view'):
-        """Get theme-aware button styles"""
+        """Get beautiful theme-aware button styles"""
         is_dark_mode = self.main_window and hasattr(self.main_window, 'current_theme') and self.main_window.current_theme == 'dark'
         
         if button_type == 'view':
             if is_dark_mode:
                 return """
                     QPushButton {
-                        background-color: #2d3748;
-                        color: #cbd5e0;
-                        border: 1px solid #4a5568;
-                        border-radius: 5px;
-                        padding: 2px 6px;
-                        font-weight: 600;
-                        font-size: 11px;
+                        background-color: #10b981;
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 4px;
+                        font-size: 16px;
+                        font-weight: bold;
                     }
                     QPushButton:hover {
-                        background-color: #4a5568;
-                        color: #e2e8f0;
+                        background-color: #059669;
                     }
                     QPushButton:pressed {
-                        background-color: #1a202c;
+                        background-color: #047857;
                     }
                 """
             else:
                 return """
                     QPushButton {
-                        background-color: #f3f4f6;
-                        color: #374151;
-                        border: 1px solid #d1d5db;
-                        border-radius: 5px;
-                        padding: 2px 6px;
-                        font-weight: 600;
-                        font-size: 11px;
+                        background-color: #10b981;
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 4px;
+                        font-size: 16px;
+                        font-weight: bold;
                     }
                     QPushButton:hover {
-                        background-color: #e5e7eb;
+                        background-color: #059669;
                     }
                     QPushButton:pressed {
-                        background-color: #d1d5db;
+                        background-color: #047857;
                     }
                 """
         
@@ -164,10 +215,10 @@ class GroupsTab(BaseTab):
                         background-color: #3b82f6;
                         color: #ffffff;
                         border: none;
-                        border-radius: 5px;
-                        padding: 2px 6px;
-                        font-weight: 600;
-                        font-size: 11px;
+                        border-radius: 6px;
+                        padding: 4px;
+                        font-size: 16px;
+                        font-weight: bold;
                     }
                     QPushButton:hover {
                         background-color: #2563eb;
@@ -179,16 +230,16 @@ class GroupsTab(BaseTab):
             else:
                 return """
                     QPushButton {
-                        background-color: #2563eb;
+                        background-color: #3b82f6;
                         color: #ffffff;
                         border: none;
-                        border-radius: 5px;
-                        padding: 2px 6px;
-                        font-weight: 600;
-                        font-size: 11px;
+                        border-radius: 6px;
+                        padding: 4px;
+                        font-size: 16px;
+                        font-weight: bold;
                     }
                     QPushButton:hover {
-                        background-color: #1d4ed8;
+                        background-color: #2563eb;
                     }
                     QPushButton:pressed {
                         background-color: #1e40af;
@@ -199,105 +250,117 @@ class GroupsTab(BaseTab):
             if is_dark_mode:
                 return """
                     QPushButton {
-                        background-color: #7f1d1d;
-                        color: #fca5a5;
-                        border: 1px solid #b91c1c;
-                        border-radius: 5px;
-                        padding: 2px 6px;
-                        font-weight: 600;
-                        font-size: 11px;
+                        background-color: #ef4444;
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 4px;
+                        font-size: 16px;
+                        font-weight: bold;
                     }
                     QPushButton:hover {
-                        background-color: #b91c1c;
-                        color: #fecaca;
+                        background-color: #dc2626;
                     }
                     QPushButton:pressed {
-                        background-color: #991b1b;
+                        background-color: #b91c1c;
                     }
                 """
             else:
                 return """
                     QPushButton {
-                        background-color: #fee2e2;
-                        color: #dc2626;
-                        border: 1px solid #fecaca;
-                        border-radius: 5px;
-                        padding: 2px 6px;
-                        font-weight: 600;
-                        font-size: 11px;
+                        background-color: #ef4444;
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 4px;
+                        font-size: 16px;
+                        font-weight: bold;
                     }
                     QPushButton:hover {
-                        background-color: #fecaca;
+                        background-color: #dc2626;
                     }
                     QPushButton:pressed {
-                        background-color: #fca5a5;
+                        background-color: #b91c1c;
                     }
                 """
         
         return ""
+        
+        return ""
     
     def refresh(self):
-        """Refresh groups table"""
+        """Refresh groups table with beautiful styling"""
         self.table.setRowCount(0)
         groups = get_all_groups()
         
         from utils.date_utils import format_datetime_to_persian
         for idx, group in enumerate(groups):
             self.table.insertRow(idx)
-            self.table.setRowHeight(idx, 48)
+            self.table.setRowHeight(idx, 65)  # Increased row height for better button fit
             
-            # ID
-            item_id = QTableWidgetItem(str(group[0]))
+            # ID with icon - RTL alignment for consistency
+            item_id = QTableWidgetItem(f"🔢 {group[0]}")
             item_id.setFlags(item_id.flags() & ~Qt.ItemIsEditable)
-            item_id.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+            item_id.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)  # RTL alignment for consistency
+            item_id.setToolTip("شناسه گروه")
             self.table.setItem(idx, 0, item_id)
             
-            # Name
-            item_name = QTableWidgetItem(group[1])
+            # Name with icon
+            item_name = QTableWidgetItem(f"🏷️ {group[1]}")
             item_name.setFlags(item_name.flags() & ~Qt.ItemIsEditable)
             item_name.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            item_name.setToolTip("نام گروه")
             self.table.setItem(idx, 1, item_name)
             
-            # Leader (leader_name is at index 3 when using JOIN)
-            leader_name = group[3] if len(group) > 3 and group[3] else "-"
-            item_leader = QTableWidgetItem(str(leader_name))
+            # Leader with icon
+            leader_name = group[3] if len(group) > 3 and group[3] else "بدون رهبر"
+            leader_icon = "👑" if leader_name != "بدون رهبر" else "👤"
+            item_leader = QTableWidgetItem(f"{leader_icon} {leader_name}")
             item_leader.setFlags(item_leader.flags() & ~Qt.ItemIsEditable)
             item_leader.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            item_leader.setToolTip("رهبر گروه")
             self.table.setItem(idx, 2, item_leader)
             
-            # Created date (formatted Persian)
+            # Created date with icon
             created = group[4] if len(group) > 4 and group[4] else "-"
-            item_created = QTableWidgetItem(format_datetime_to_persian(created))
+            created_formatted = format_datetime_to_persian(created)
+            item_created = QTableWidgetItem(f"📅 {created_formatted}")
             item_created.setFlags(item_created.flags() & ~Qt.ItemIsEditable)
             item_created.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            item_created.setToolTip("تاریخ ایجاد گروه")
             self.table.setItem(idx, 3, item_created)
 
-            # Actions cell with proper padding
+            # Actions cell with proper padding and flexible layout
             actions_cell = QWidget()
             actions_cell.setStyleSheet("background-color: transparent; padding: 0px; margin: 0px;")
+            actions_cell.setLayoutDirection(Qt.RightToLeft)  # Ensure RTL for buttons
             actions_layout = QHBoxLayout(actions_cell)
-            actions_layout.setContentsMargins(6, 6, 6, 6)
-            actions_layout.setSpacing(5)
+            actions_layout.setContentsMargins(2, 4, 2, 4)  # Reduced margins for better fit
+            actions_layout.setSpacing(4)  # Reduced spacing
+            actions_layout.setDirection(QHBoxLayout.RightToLeft)  # Explicit RTL direction
 
-            # View button
-            btn_view = QPushButton("نمایش")
+            # View button - make it more compact
+            btn_view = QPushButton("👁️")
             btn_view.setCursor(Qt.PointingHandCursor)
-            btn_view.setFixedSize(62, 36)
+            btn_view.setFixedSize(32, 32)  # Smaller, square buttons
             btn_view.setStyleSheet(self.get_button_style('view'))
+            btn_view.setToolTip("نمایش گروه")
             btn_view.clicked.connect(lambda _, gid=group[0]: self.view_group(gid))
 
-            # Edit button
-            btn_edit = QPushButton("ویرایش")
+            # Edit button - make it more compact
+            btn_edit = QPushButton("✏️")
             btn_edit.setCursor(Qt.PointingHandCursor)
-            btn_edit.setFixedSize(62, 36)
+            btn_edit.setFixedSize(32, 32)  # Smaller, square buttons
             btn_edit.setStyleSheet(self.get_button_style('edit'))
+            btn_edit.setToolTip("ویرایش گروه")
             btn_edit.clicked.connect(lambda _, gid=group[0]: self.edit_group_by_id(gid))
 
-            # Delete button
-            btn_del = QPushButton("حذف")
+            # Delete button - make it more compact
+            btn_del = QPushButton("🗑️")
             btn_del.setCursor(Qt.PointingHandCursor)
-            btn_del.setFixedSize(58, 36)
+            btn_del.setFixedSize(32, 32)  # Smaller, square buttons
             btn_del.setStyleSheet(self.get_button_style('delete'))
+            btn_del.setToolTip("حذف گروه")
             btn_del.clicked.connect(lambda _, gid=group[0], gname=group[1]: self.delete_group_by_id(gid, gname))
 
             actions_layout.addWidget(btn_view)
@@ -370,13 +433,6 @@ class GroupsTab(BaseTab):
             self.main_window.refresh_all()
 
     def view_group(self, group_id):
-        from db.groups_db import get_group_by_id
-        from utils.date_utils import format_datetime_to_persian
-        group = get_group_by_id(group_id)
-        if not group:
-            QMessageBox.warning(self, "خطا", "گروه پیدا نشد!")
-            return
-        gid, name, leader_id, leader_name, created = group
-        created_p = format_datetime_to_persian(created)
-        info = f"نام گروه: {name}\nرهبر: {leader_name}\nتاریخ ایجاد: {created_p}"
-        QMessageBox.information(self, "جزئیات گروه", info)
+        """Open dialog to view group details"""
+        dialog = GroupDialog(self, group_id, view_mode=True)
+        dialog.exec_()

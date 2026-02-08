@@ -8,12 +8,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget,
 
 from ui.tabs.groups_tab import GroupsTab
 from ui.tabs.members_tab import MembersTab
-from ui.tabs.monthly_fee_tab import MonthlyFeeTab
-from ui.tabs.collected_money_tab import CollectedMoneyTab
-from ui.tabs.general_expenses_tab import GeneralExpensesTab
-from ui.tabs.death_expenses_tab import DeathExpensesTab
-from ui.tabs.loans_tab import LoansTab
-from ui.tabs.summary_tab import SummaryTab
+
 from ui.styles import LIGHT_STYLE, DARK_STYLE
 
 
@@ -108,37 +103,20 @@ class MainWindow(QMainWindow):
         self.sidebar = QListWidget()
         self.sidebar.setFixedWidth(260)
         self.sidebar.addItems([
-            "📊 داشبورد / خلاصه",
             "👥 گروه‌ها",
             "👤 اعضا",
-            "💰 هزینه ماهیانه",
-            "💵 پول جمع‌آوری‌شده",
-            "📋 مصارف عمومی",
-            "⚰️ مصارف فوتی",
-            "📑 قرض‌ها",
         ])
         body_layout.addWidget(self.sidebar)
 
         # Stacked pages
         self.pages = QStackedWidget()
-        self.summary_tab = SummaryTab(self)
+       
         self.groups_tab = GroupsTab(self)
         self.members_tab = MembersTab(self)
-        self.monthly_fee_tab = MonthlyFeeTab(self)
-        self.collected_tab = CollectedMoneyTab(self)
-        self.general_exp_tab = GeneralExpensesTab(self)
-        self.death_exp_tab = DeathExpensesTab(self)
-        self.loans_tab = LoansTab(self)
 
         for w in [
-            self.summary_tab,
             self.groups_tab,
             self.members_tab,
-            self.monthly_fee_tab,
-            self.collected_tab,
-            self.general_exp_tab,
-            self.death_exp_tab,
-            self.loans_tab,
         ]:
             self.pages.addWidget(w)
 
@@ -204,14 +182,8 @@ class MainWindow(QMainWindow):
     def refresh_all(self):
         """Later we call this after any insert/update so all tabs can reload data."""
         for w in [
-            self.summary_tab,
             self.groups_tab,
             self.members_tab,
-            self.monthly_fee_tab,
-            self.collected_tab,
-            self.general_exp_tab,
-            self.death_exp_tab,
-            self.loans_tab,
         ]:
             if hasattr(w, "refresh"):
                 w.refresh()

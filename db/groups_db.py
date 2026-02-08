@@ -4,6 +4,7 @@ Database operations for Groups
 """
 
 from db import fetch_all, execute
+from utils.date_utils import get_current_persian_date, get_current_persian_datetime
 
 
 def get_all_groups():
@@ -34,13 +35,14 @@ def get_group_by_id(group_id):
 
 
 def add_group(name, leader_member_id=None):
-    """Add a new group"""
+    """Add a new group with Persian date"""
     query = """
-        INSERT INTO groups (name, leader_member_id)
-        VALUES (?, ?)
+        INSERT INTO groups (name, leader_member_id, created_at)
+        VALUES (?, ?, ?)
     """
     try:
-        group_id = execute(query, (name, leader_member_id))
+        current_date = get_current_persian_datetime()
+        group_id = execute(query, (name, leader_member_id, current_date))
         return True, group_id
     except Exception as e:
         return False, str(e)
